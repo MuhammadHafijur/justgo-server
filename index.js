@@ -26,12 +26,31 @@ async function run() {
 
     const database = client.db("justGo");
     const servicesCollection = database.collection("services");
+    const orderCollection = database.collection("Orders");
+
+    // ORDERS
+    // POST API
+    app.post("/services", async (req, res) => {
+      const order = req.body;
+      console.log('Hit the post api', order)
+      const result = await orderCollection.insertOne(order);
+      console.log(result)
+      res.json(result)
+
+  });
 
     // GET API
     app.get('/services', async (req, res) => {
       const cursor = servicesCollection.find({});
       const services = await cursor.toArray();
       res.send(services);
+    })
+
+    // GET API for Orders
+    app.get('/manage-order', async (req, res) => {
+      const cursor = orderCollection.find({});
+      const orders = await cursor.toArray();
+      res.send(orders);
     })
 
     // GET Single Service
@@ -47,18 +66,38 @@ async function run() {
     app.post("/services", async (req, res) => {
         const service = req.body;
         console.log('Hit the post api', service)
-
         const result = await servicesCollection.insertOne(service);
         console.log(result)
         res.json(result)
 
     });
 
+    // UPDATE API
+    // Approve The Pending
+    app.put('/approve/:id', async (req, res) => {
+      const id = req.params.id;
+      // console.log('updating.... ', id)
+      const status = req.body.status;
+      console.log(status);
+      const query = { _id: ObjectId(id) }; // filtering user's object
+      const options = { upsert: true }; // update and insert
+    
+
+      const updateDoc = { // set data
+          $set: {
+              status: status
+          },
+      };
+      const result = await orderCollection.updateOne(query, updateDoc, options)
+      res.json(result)
+  })
+
+
     // DELETE API
-    app.delete('/services/:id', async (req, res) => {
+    app.delete('/order/:id', async (req, res) => {
       const id = req.params.id;
       const query = {_id: ObjectId(id)};
-      const result = await servicesCollection.deleteOne(query);
+      const result = await orderCollection.deleteOne(query);
       res.json(result)
     })
 
